@@ -127,25 +127,52 @@ def render():
         if v == "A":  return "background-color:#eff6ff;color:#1e3a8a"
         return ""
 
-    styled = df.style \
-        .applymap(colour_buy_score, subset=["Buy Score"] if "Buy Score" in df.columns else ["Signal"]) \
-        .applymap(colour_buy_grade, subset=["Buy Grade"] if "Buy Grade" in df.columns else ["Signal"]) \
-        .applymap(colour_flat,   subset=["Flat <5% (%)"]) \
-        .applymap(colour_move,   subset=["Up >5% (%)","Down >5% (%)","Up >10% (%)","Down >10% (%)"]) \
-        .applymap(colour_ivr,    subset=["IVR (%)"]) \
-        .applymap(colour_signal, subset=["Signal"]) \
-        .format({
-            "Spot (₹)":          "₹{:,.2f}",
-            "HV20 (%)":          "{:.1f}%",
-            "IV approx (%)":     "{:.1f}%",
-            "IVR (%)":           "{:.0f}%",
-            "Mean 30d move (%)": "{:+.2f}%",
-            "Up >5% (%)":        "{:.1f}%",
-            "Down >5% (%)":      "{:.1f}%",
-            "Flat <5% (%)":      "{:.1f}%",
-            "Up >10% (%)":       "{:.1f}%",
-            "Down >10% (%)":     "{:.1f}%",
-        }, na_rep="—")
+   # ── SAFE styling (FIXED FOR STREAMLIT CLOUD) ─────────────────────
+
+    if df is None or df.empty:
+        st.warning("⚠️ No data available. API may be blocked or failed.")
+        st.stop()
+
+   
+    buy_score_cols = ["Buy Score"] if "Buy Score" in df.columns else []
+    buy_grade_cols = ["Buy Grade"] if "Buy Grade" in df.columns else []
+    flat_cols      = ["Flat <5% (%)"] if "Flat <5% (%)" in df.columns else []
+    move_cols      = [c for c in ["Up >5% (%)","Down >5% (%)","Up >10% (%)","Down >10% (%)"] if c in df.columns]
+    ivr_cols       = ["IVR (%)"] if "IVR (%)" in df.columns else []
+    signal_cols    = ["Signal"] if "Signal" in df.columns else []
+
+    styled = df.style
+
+    if buy_score_cols:
+        styled = styled.applymap(colour_buy_score, subset=buy_score_cols)
+
+    if buy_grade_cols:
+        styled = styled.applymap(colour_buy_grade, subset=buy_grade_cols)
+
+    if flat_cols:
+        styled = styled.applymap(colour_flat, subset=flat_cols)
+
+    if move_cols:
+        styled = styled.applymap(colour_move, subset=move_cols)
+
+    if ivr_cols:
+        styled = styled.applymap(colour_ivr, subset=ivr_cols)
+
+    if signal_cols:
+        styled = styled.applymap(colour_signal, subset=signal_cols)
+
+    styled = styled.format({
+        "Spot (₹)":          "₹{:,.2f}",
+        "HV20 (%)":          "{:.1f}%",
+        "IV approx (%)":     "{:.1f}%",
+        "IVR (%)":           "{:.0f}%",
+        "Mean 30d move (%)": "{:+.2f}%",
+        "Up >5% (%)":        "{:.1f}%",
+        "Down >5% (%)":      "{:.1f}%",
+        "Flat <5% (%)":      "{:.1f}%",
+        "Up >10% (%)":       "{:.1f}%",
+        "Down >10% (%)":     "{:.1f}%",
+    }, na_rep="—")
 
     st.dataframe(styled, use_container_width=True, height=520)
 
